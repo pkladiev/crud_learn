@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres-compose-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: core_service_db
+    ports:
+      - "5433:5432" # наружу — 5433, внутри — стандартный 5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  core-service:
+    build:
+      context: ./core-service
+    container_name: core-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/core_service_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123
+    depends_on:
+      - postgres
+    networks:
+      - backend
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "9090:9090"
+    depends_on:
+      - core-service
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
